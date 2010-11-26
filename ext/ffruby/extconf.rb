@@ -23,4 +23,8 @@ end
 have_library("avformat")
 have_library("avcodec")
 
+%w( iformat oformat codec ).each do |func|
+  have_func("av_#{func}_next")
+end
+
 create_makefile("ffruby")

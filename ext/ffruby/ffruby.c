@@ -32,10 +32,18 @@ static VALUE ffruby_formats(VALUE self, VALUE klass)
 	AVOutputFormat *ofmt;
 	VALUE array = rb_ary_new();
 
+#ifdef HAVE_AV_IFORMAT_NEXT
 	for (ifmt = av_iformat_next(NULL); ifmt; ifmt = av_iformat_next(ifmt))
+#else
+	for (ifmt = first_iformat; ifmt; ifmt = ifmt->next)
+#endif
 		rb_ary_push(array, rb_str_new2(ifmt->name));
 
+#ifdef HAVE_AV_OFORMAT_NEXT
 	for (ofmt = av_oformat_next(NULL); ofmt; ofmt = av_oformat_next(ofmt))
+#else
+	for (ofmt = first_oformat; ofmt; ofmt = ofmt->next)
+#endif
 		rb_ary_push(array, rb_str_new2(ofmt->name));
 
 	return rb_funcall(rb_funcall(array, rb_intern("uniq"), 0), rb_intern("sort"), 0);
@@ -49,7 +57,11 @@ static VALUE ffruby_codecs(VALUE self, VALUE klass)
 	AVCodec *codec;
 	VALUE array = rb_ary_new();
 
+#ifdef HAVE_AV_CODEC_NEXT
 	for (codec = av_codec_next(NULL); codec; codec = av_codec_next(codec))
+#else
+	for (codec = first_avcodec; codec; codec = codec->next)
+#endif
 		rb_ary_push(array, rb_str_new2(codec->name));
 
 	return rb_funcall(rb_funcall(array, rb_intern("uniq"), 0), rb_intern("sort"), 0);

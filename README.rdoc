@@ -22,6 +22,10 @@ Being able to reliably read the source file's metadata is very important in deci
 
 == Changes
 
+=== 0.2.1 (2010/11/26)
+
+- New formats and codecs methods working on older FFmpeg versions.
+
 === 0.2.0 (2010/11/24)
 
 - Reworked class structure under common FFruby module.
