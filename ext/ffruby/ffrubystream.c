@@ -24,8 +24,10 @@ VALUE cFFrubyStream;
 VALUE cFFrubyVideoStream;
 VALUE cFFrubyAudioStream;
 
-/* Satisfy stupid RDoc. This hopefully gets optimised away. */
-static void rdoc() { mFFruby = rb_define_module("FFruby"); }
+#ifdef RDOC
+	/* Satisfy stupid RDoc. */
+	static void rdoc() { mFFruby = rb_define_module("FFruby"); }
+#endif
 
 static VALUE ffrs_alloc(VALUE klass)
 {

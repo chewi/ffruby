@@ -24,8 +24,10 @@
 
 VALUE cFFrubyFile;
 
-/* Satisfy stupid RDoc. This hopefully gets optimised away. */
-static void rdoc() { mFFruby = rb_define_module("FFruby"); }
+#ifdef RDOC
+	/* Satisfy stupid RDoc. */
+	static void rdoc() { mFFruby = rb_define_module("FFruby"); }
+#endif
 
 static void ffrf_free(AVFormatContext *fmt)
 {

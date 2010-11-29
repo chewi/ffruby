@@ -25,6 +25,7 @@ Being able to reliably read the source file's metadata is very important in deci
 === 0.2.2 (2010/11/29)
 
 - Fix compilation with -fno-common for OS X.
+- Make RDoc hack a bit safer.
 
 === 0.2.1 (2010/11/26)
 
