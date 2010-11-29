@@ -20,6 +20,10 @@
 
 #include "ffruby.h"
 
+VALUE cFFrubyStream;
+VALUE cFFrubyVideoStream;
+VALUE cFFrubyAudioStream;
+
 /* Satisfy stupid RDoc. This hopefully gets optimised away. */
 static void rdoc() { mFFruby = rb_define_module("FFruby"); }
 

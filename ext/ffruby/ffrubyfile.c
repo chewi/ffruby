@@ -22,6 +22,8 @@
 #include <string.h>
 #include <stdio.h>
 
+VALUE cFFrubyFile;
+
 /* Satisfy stupid RDoc. This hopefully gets optimised away. */
 static void rdoc() { mFFruby = rb_define_module("FFruby"); }
 

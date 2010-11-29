@@ -23,6 +23,8 @@
 extern void Init_ffrf();
 extern void Init_ffrs();
 
+VALUE mFFruby;
+
 /* Returns an array of the input and output formats supported by
  * FFmpeg. This method will hopefully be expanded to return more than
  * just names in the future. */

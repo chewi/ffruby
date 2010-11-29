@@ -25,10 +25,10 @@
 #include AVFORMAT_H_PATH
 #include AVCODEC_H_PATH
 
-VALUE mFFruby;
-VALUE cFFrubyFile;
-VALUE cFFrubyStream;
-VALUE cFFrubyVideoStream;
-VALUE cFFrubyAudioStream;
+extern VALUE mFFruby;
+extern VALUE cFFrubyFile;
+extern VALUE cFFrubyStream;
+extern VALUE cFFrubyVideoStream;
+extern VALUE cFFrubyAudioStream;
 
 #endif
