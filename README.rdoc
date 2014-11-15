@@ -6,11 +6,11 @@ FFruby is a Ruby interface to FFmpeg's libavformat and libavcodec. It allows you
 
 === Where do I go for support and contributions?
 
-We are hosted by RubyForge at http://rubyforge.org/projects/ffruby.
+We are hosted on GitHub at https://github.com/chewi/ffruby.
 
 === Where do I get the latest version?
 
-It should be available through RubyGems as ffruby. Failing that, try RubyForge.
+It should be available through RubyGems as ffruby. Failing that, try GitHub.
 
 === What about transcoding?
 
@@ -21,6 +21,11 @@ I still start FFmpeg through a subshell when I need to transcode something. Ther
 Being able to reliably read the source file's metadata is very important in deciding how it should be transcoded, or whether it even needs to be transcoded at all. This is not something you want to rely on a subshell for as that would involve awkward parsing of FFmpeg's output, which does change between versions.
 
 == Changes
+
+=== 0.2.3 (2014/11/15)
+
+- Compatibility with newer FFmpeg versions.
+- Compatibility with Ruby 1.9.
 
 === 0.2.2 (2010/11/29)
 
@@ -50,4 +55,4 @@ Being able to reliably read the source file's metadata is very important in deci
 
 == Copyright
 
-Copyright (c) 2007-2010 James Le Cuirot. See LICENSE for details.
+Copyright (c) 2007-2014 James Le Cuirot. See LICENSE for details.

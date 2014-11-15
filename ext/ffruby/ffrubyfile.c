@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2010 James Le Cuirot
+ * Copyright (c) 2007-2014 James Le Cuirot
  *
  * This file is part of FFruby.
  *
@@ -21,6 +21,7 @@
 #include "ffruby.h"
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 VALUE cFFrubyFile;
 
@@ -41,7 +42,11 @@ static void ffrf_free(AVFormatContext *fmt)
 				avcodec_close(fmt->streams[i]->codec);
 		}
 
+#ifdef HAVE_AVFORMAT_CLOSE_INPUT
+		avformat_close_input(&fmt);
+#else
 		av_close_input_file(fmt);
+#endif
 	}
 }
 
@@ -57,60 +62,99 @@ static AVFormatContext* ffrf_get_fmt(VALUE self)
 	return fmt;
 }
 
+#ifdef HAVE_AV_DICT_GET
+
+static VALUE ffrf_get_metadata_str(VALUE self, const char *key)
+{
+	AVFormatContext *fmt = ffrf_get_fmt(self);
+	AVDictionaryEntry *tag = av_dict_get(fmt->metadata, key, NULL, 0);
+	return (tag && *tag->value) ? rb_str_new2(tag->value) : Qnil;
+}
+
+static VALUE ffrf_get_metadata_int(VALUE self, const char *key)
+{
+	AVFormatContext *fmt = ffrf_get_fmt(self);
+	AVDictionaryEntry *tag = av_dict_get(fmt->metadata, key, NULL, 0);
+
+	if (tag)
+	{
+		int value = atoi(tag->value);
+		if (value != 0) return INT2NUM(value);
+	}
+
+	return Qnil;
+}
+
+#define METADATA_STR(key) ffrf_get_metadata_str(self, # key)
+#define METADATA_INT(key) ffrf_get_metadata_int(self, # key)
+
+#else
+
+static VALUE ffrf_get_metadata_str(char* value)
+{
+	return (value && *value) ? rb_str_new2(value) : Qnil;
+}
+
+static VALUE ffrf_get_metadata_int(int value)
+{
+	return value != 0 ? INT2NUM(value) : Qnil;
+}
+
+#define METADATA_STR(key) ffrf_get_metadata_str(ffrf_get_fmt(self)->key)
+#define METADATA_INT(key) ffrf_get_metadata_int(ffrf_get_fmt(self)->key)
+
+#endif
+
 /* Returns the title string. */
 static VALUE ffrf_title(VALUE self)
 {
-	AVFormatContext *fmt = ffrf_get_fmt(self);
-	return rb_str_new2(fmt->title);
+	return METADATA_STR(title);
 }
 
-/* Returns the author string. */
-static VALUE ffrf_author(VALUE self)
+/* Returns the artist/author string. */
+static VALUE ffrf_artist(VALUE self)
 {
-	AVFormatContext *fmt = ffrf_get_fmt(self);
-	return rb_str_new2(fmt->author);
+#ifdef HAVE_AV_DICT_GET
+	return METADATA_STR(artist);
+#else
+	return METADATA_STR(author);
+#endif
 }
 
 /* Returns the copyright string. */
 static VALUE ffrf_copyright(VALUE self)
 {
-	AVFormatContext *fmt = ffrf_get_fmt(self);
-	return rb_str_new2(fmt->copyright);
+	return METADATA_STR(copyright);
 }
 
 /* Returns the comment string. */
 static VALUE ffrf_comment(VALUE self)
 {
-	AVFormatContext *fmt = ffrf_get_fmt(self);
-	return rb_str_new2(fmt->comment);
+	return METADATA_STR(comment);
 }
 
 /* Returns the album string. */
 static VALUE ffrf_album(VALUE self)
 {
-	AVFormatContext *fmt = ffrf_get_fmt(self);
-	return rb_str_new2(fmt->album);
+	return METADATA_STR(album);
 }
 
 /* Returns the genre string. */
 static VALUE ffrf_genre(VALUE self)
 {
-	AVFormatContext *fmt = ffrf_get_fmt(self);
-	return rb_str_new2(fmt->genre);
+	return METADATA_STR(genre);
 }
 
 /* Returns the year. */
 static VALUE ffrf_year(VALUE self)
 {
-	AVFormatContext *fmt = ffrf_get_fmt(self);
-	return INT2NUM(fmt->year);
+	return METADATA_INT(year);
 }
 
 /* Returns the track number. */
 static VALUE ffrf_track(VALUE self)
 {
-	AVFormatContext *fmt = ffrf_get_fmt(self);
-	return INT2NUM(fmt->track);
+	return METADATA_INT(track);
 }
 
 /* Returns the duration in seconds as a float. */
@@ -157,10 +201,18 @@ static VALUE ffrf_streams(VALUE self)
 
 			switch (fmt->streams[i]->codec->codec_type)
 			{
+#ifdef HAVE_CONST_AVMEDIA_TYPE_UNKNOWN
+				case AVMEDIA_TYPE_VIDEO:
+#else
 				case CODEC_TYPE_VIDEO:
+#endif
 					rb_ary_push(streams, rb_class_new_instance(2, args, cFFrubyVideoStream));
 					break;
+#ifdef HAVE_CONST_AVMEDIA_TYPE_UNKNOWN
+				case AVMEDIA_TYPE_AUDIO:
+#else
 				case CODEC_TYPE_AUDIO:
+#endif
 					rb_ary_push(streams, rb_class_new_instance(2, args, cFFrubyAudioStream));
 					break;
 				default:
@@ -183,7 +235,7 @@ static VALUE ffrf_av_streams(VALUE self, VALUE klass)
 	typed_streams = rb_ary_new();
 	Check_Type(streams, T_ARRAY);
 
-	for (i = 0; i < RARRAY(streams)->len; i++)
+	for (i = 0; i < RARRAY_LEN(streams); i++)
 	{
 		if (rb_obj_is_kind_of((stream = rb_ary_entry(streams, i)), klass))
 			rb_ary_push(typed_streams, stream);
@@ -212,13 +264,17 @@ static VALUE ffrf_initialize(VALUE self, VALUE filename)
 {
 	size_t len;
 	char* msg;
-	AVFormatContext *fmt;
 	VALUE exception;
+	AVFormatContext *fmt = NULL;
 
 	VALUE filename_str = rb_funcall(filename, rb_intern("to_s"), 0);
-    char* filename_ptr = RSTRING(filename_str)->ptr;
+	char* filename_ptr = RSTRING_PTR(filename_str);
 
+#ifdef HAVE_AVFORMAT_OPEN_INPUT
+	if (avformat_open_input(&fmt, filename_ptr, NULL, NULL) != 0)
+#else
 	if (av_open_input_file(&fmt, filename_ptr, NULL, 0, NULL) != 0)
+#endif
 	{
 		len = strlen("Cannot open file !") + strlen(filename_ptr) + 1;
 		msg = ALLOC_N(char, len);
@@ -228,7 +284,11 @@ static VALUE ffrf_initialize(VALUE self, VALUE filename)
 		rb_exc_raise(exception);
 	}
 
+#ifdef HAVE_AVFORMAT_FIND_STREAM_INFO
+	if (avformat_find_stream_info(fmt, NULL) < 0)
+#else
 	if (av_find_stream_info(fmt) < 0)
+#endif
 	{
 		len = strlen("Problem reading file !") + strlen(filename_ptr) + 1;
 		msg = ALLOC_N(char, len);
@@ -252,7 +312,7 @@ void Init_ffrf()
 	rb_define_alloc_func(cFFrubyFile, ffrf_alloc);
 	rb_define_method(cFFrubyFile, "initialize", ffrf_initialize, 1);
 	rb_define_method(cFFrubyFile, "title", ffrf_title, 0);
-	rb_define_method(cFFrubyFile, "author", ffrf_author, 0);
+	rb_define_method(cFFrubyFile, "artist", ffrf_artist, 0);
 	rb_define_method(cFFrubyFile, "copyright", ffrf_copyright, 0);
 	rb_define_method(cFFrubyFile, "comment", ffrf_comment, 0);
 	rb_define_method(cFFrubyFile, "album", ffrf_album, 0);
@@ -265,4 +325,5 @@ void Init_ffrf()
 	rb_define_method(cFFrubyFile, "streams", ffrf_streams, 0);
 	rb_define_method(cFFrubyFile, "video_streams", ffrf_video_streams, 0);
 	rb_define_method(cFFrubyFile, "audio_streams", ffrf_audio_streams, 0);
+	rb_define_alias(cFFrubyFile, "author", "artist");
 }

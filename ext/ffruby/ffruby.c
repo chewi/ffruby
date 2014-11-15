@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2010 James Le Cuirot
+ * Copyright (c) 2007-2014 James Le Cuirot
  *
  * This file is part of FFruby.
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2010 James Le Cuirot
+ * Copyright (c) 2007-2014 James Le Cuirot
  *
  * This file is part of FFruby.
  *
@@ -50,7 +50,11 @@ static void ffrs_open_codec(AVStream* stream)
 		if ((codec = avcodec_find_decoder(stream->codec->codec_id)) == NULL)
 			rb_raise(rb_eIOError, "Cannot find codec!");
 
+#ifdef HAVE_AVCODEC_OPEN2
+		if (avcodec_open2(stream->codec, codec, NULL) < 0)
+#else
 		if (avcodec_open(stream->codec, codec) < 0)
+#endif
 			rb_raise(rb_eIOError, "Cannot open codec!");
 	}
 }
@@ -179,16 +183,14 @@ static VALUE ffras_sample_rate(VALUE self)
 static VALUE ffrs_initialize(VALUE self, VALUE file, VALUE index)
 {
 	AVFormatContext *fmt;
-	AVStream *stream;
 	unsigned int i = FIX2UINT(index);
 
 	Data_Get_Struct(file, AVFormatContext, fmt);
 
-	if (i < 0 || i >= fmt->nb_streams)
+	if (i >= fmt->nb_streams)
 		rb_raise(rb_eIndexError, "Stream index out of range!");
 
 	DATA_PTR(self) = fmt->streams[i];
-	stream = ffrs_get_stream(self);
 
 	return self;
 }

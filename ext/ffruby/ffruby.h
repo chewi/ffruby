@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2010 James Le Cuirot
+ * Copyright (c) 2007-2014 James Le Cuirot
  *
  * This file is part of FFruby.
  *
@@ -22,6 +22,7 @@
 #define _FFRUBY_H_
 
 #include <ruby.h>
+#include AVUTIL_H_PATH
 #include AVFORMAT_H_PATH
 #include AVCODEC_H_PATH
 

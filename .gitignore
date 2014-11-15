@@ -1,4 +1,9 @@
-ffruby.gemspec
-lib
-pkg
-tmp
+/ext/ffruby/*.o
+/ext/ffruby/*.so
+/ext/ffruby/Makefile
+/ext/ffruby/mkmf.log
+/Gemfile.lock
+/lib
+/pkg
+/rdoc
+/tmp
